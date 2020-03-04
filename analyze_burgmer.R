@@ -3,8 +3,7 @@ rm(list=ls())
 setwd("~/Dropbox/Projects/041_Powerscaling_stability/src/analyze_burgmer/")
 
 #TODO: think about adding multiple species?
-#TODO: Think about adding two coefficients for obs?
-#TODO: Check fitting performance with two Taylor coefficients
+#TODO: check fitting performance with two Taylor coefficients
 #TODO: think about leave-one-out cross-validation at the rep level
 
 ## set-up
@@ -88,11 +87,11 @@ euse<-sout$E[which.max(sout$rho)]
 
 spred<-s_map(y, E=euse, theta=tuse, silent = TRUE, lib = libuse_y, stats_only = FALSE)
 plot(spred$model_output[[1]]$obs, pmax(0, spred$model_output[[1]]$pred), xlab="obs", ylab="pred"); abline(a=0, b=1, lty=2); abline(h=0, v=0, lty=3)
-cor(spred$model_output[[1]]$obs, pmax(0, spred$model_output[[1]]$pred), use="complete")
+cor(spred$model_output[[1]]$obs, pmax(0, spred$model_output[[1]]$pred), use="complete")^2
 
 # set priors
-minvUSE_edm<-c(-5, -5, -5, -5) #minimum interval for obs, proc, and theta
-maxvUSE_edm<-c(0, 0, 1, 2) #maximum interval for obs, proc, and theta
+minvUSE_edm<-c(-5, -5, -5, -5, -5) #minimum interval for obs, proc, and theta
+maxvUSE_edm<-c(0, 0, 0, 1, 2) #maximum interval for obs, proc, and theta
 
 #density, sampler, and prior functions for EDM function
 density_fun_USE_edm<-function(param) density_fun0(param = param, minv = minvUSE_edm, maxv=maxvUSE_edm)
@@ -109,7 +108,7 @@ likelihood_EDM_piecewise<-function(x) {
   xuse<-x[1:(length(x)-1)]
   tuse_edm<-exp(x[length(x)])
   
-  smap_out<-s_map(y, E=Euse, theta=tuse, silent = TRUE, lib = libuse_y, save_smap_coefficients = TRUE)
+  smap_out<-s_map(y, E=Euse, theta=tuse_edm, silent = TRUE, lib = libuse_y, save_smap_coefficients = TRUE)
   smap_coefs<-smap_out$smap_coefficients[[1]]
   
   LLtot<-0
@@ -155,6 +154,7 @@ bayesianSetup_EDM <- createBayesianSetup(likelihood = likelihood_EDM_piecewise, 
 #run MCMC optimization
 out_EDM <- runMCMC(bayesianSetup = bayesianSetup_EDM, settings = list(iterations=niter, consoleUpdates=20))
 plot(out_EDM, start = floor(niter/5))
+correlationPlot(out_EDM, start = floor(niter/5))
 
 #get trajectories
 smp_EDM<-getSample(out_EDM, start=floor(niter/5))
@@ -166,17 +166,12 @@ for(i in 1:nrow(smp_EDM)) {
     print(round(i/nrow(smp_EDM),3))
   }
 }
-#simout<-sapply(1:nrow(smp_EDM), function(ii) particleFilterLL_piecewise(smp_EDM[ii,], N=N)$Nest)
-
+#save.image("tmp.rda", version = 2)
 
 #plot outputs
 par(mar=c(4,4,2,1))
-m<-rbind(c(1,1,2,5),
-         c(1,1,2,5),
-         c(1,1,3,5),
-         c(1,1,3,6),
-         c(1,1,4,6),
-         c(1,1,4,6))
+m<-rbind(c(1,1,2,4,6),
+         c(1,1,3,5,7))
 layout(m)
 plot(range(dat$time[yps]), c(0, 5), xlab="time", ylab="abundance", type="n", xaxs="i", main="Corrected")
 for(i in 1:nrow(libuse_y)) {
@@ -187,12 +182,14 @@ for(i in 1:nrow(libuse_y)) {
 abline(h=0, lty=3)
 abline(v=(dat$time[yps][libuse_y[1,1]:libuse_y[1,2]])[Euse], lty=3)
 
-hist(exp(smp_EDM[,1]), main="Obs. Error", xlab="obs", breaks = 20, probability = TRUE)
+hist(exp(smp_EDM[,1]), main="Obs. Error_B0", xlab="obs", breaks = 20, probability = TRUE)
 abline(v=mean(exp(smp_EDM[,1])), lwd=2, col="blue")
-hist(exp(smp_EDM[,2]), main="Proc. Noise_B0", xlab="proc", breaks = 20, probability = TRUE)
-abline(v=mean(exp(smp_EDM[,2])), lwd=2, col="red")
-hist(exp(smp_EDM[,3]), main="Proc. Noise_B1", xlab="proc", breaks = 20, probability = TRUE)
+hist(exp(smp_EDM[,2]), main="Obs. Error_B1", xlab="obs", breaks = 20, probability = TRUE)
+abline(v=mean(exp(smp_EDM[,2])), lwd=2, col="blue")
+hist(exp(smp_EDM[,3]), main="Proc. Noise_B0", xlab="proc", breaks = 20, probability = TRUE)
 abline(v=mean(exp(smp_EDM[,3])), lwd=2, col="red")
+hist(exp(smp_EDM[,4]), main="Proc. Noise_B1", xlab="proc", breaks = 20, probability = TRUE)
+abline(v=mean(exp(smp_EDM[,4])), lwd=2, col="red")
 
 plot(range(dat$time[yps]), c(0, 5), xlab="time", ylab="abundance", type="n", xaxs="i", main="Raw")
 for(i in 1:nrow(libuse_y)) {
@@ -204,7 +201,7 @@ abline(h=0, lty=3)
 
 plot(tmp[,2], y, xlab="Corrected", ylab="Raw", col=adjustcolor(1, alpha.f = 0.2))
 segments(tmp[,1], y, tmp[,3], y, lend=2, col=adjustcolor(1, alpha.f = 0.2))
-obsest<-pmax(0.01, y*mean(exp(smp_EDM[,1])))
+obsest<-pmax(0.01, mean(exp(smp_EDM[,1]))+y*mean(exp(smp_EDM[,2])))
 segments(tmp[,2], y-obsest, tmp[,2], y+obsest, lend=2, col=adjustcolor(1, alpha.f = 0.2))
 abline(a=0, b=1, lty=2, lwd=2)
 abline(h=0, v=0, lty=3)
