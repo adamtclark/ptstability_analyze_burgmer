@@ -5,7 +5,6 @@ setwd("~/Dropbox/Projects/041_Powerscaling_stability/src/analyze_burgmer/")
 #TODO: think about adding multiple species?
 #TODO: check fitting performance with two Taylor coefficients
 #TODO: think about leave-one-out cross-validation at the rep level
-#TODO: think about removing s-map call from mcmc code
 
 ## set-up
 # load packages
