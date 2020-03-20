@@ -73,7 +73,8 @@ if(FALSE) {
   trtuse<-"LSA"
   libuse<-as.matrix(libmat[libmat$trt==trtuse,c("start", "end")])
   yps<-which(dat$treatment==trtuse)
-  y<-dat$Chlamydomonas.terricola[yps]
+  #y<-dat$Chlamydomonas.terricola[yps]
+  y<-dat$Fragilaria.capucina[yps]
   libuse_y<-libuse-min(libuse)+1
   y<-y/sd(y)
   
@@ -122,7 +123,7 @@ if(FALSE) {
       smap_coefs_segment<-smap_coefs[libuse_y[i,1]:libuse_y[i,2],]
       
       LLtot<-LLtot+likelihood0(param = xuse, y=ysegment, parseparam = function(x) parseparam0(x, colparam=c(logit(1e-6), log(0.1))),
-                detfun = EDMfun0, edmdat = list(E=Euse, theta=tuse_edm, smp_cf=smap_coefs_segment), N = N)
+                detfun = EDMfun0, edmdat = list(E=Euse, theta=tuse_edm, smp_cf=smap_coefs_segment, ytot=y), N = N)
     }
     
     return(LLtot)
@@ -146,7 +147,7 @@ if(FALSE) {
                             edmdat = list(E=Euse, theta=tuse_edm, smp_cf=smap_coefs_segment),
                             dotraceback = TRUE)
       pfout$Nest[libuse_y[i,1]:libuse_y[i,2]]<-tmp$Nest
-      pfout$Nsd[libuse_y[i,1]:libuse_y[i,2]]<-tmp$Nest
+      pfout$Nsd[libuse_y[i,1]:libuse_y[i,2]]<-tmp$Nsd
       pfout$rep[libuse_y[i,1]:libuse_y[i,2]]<-i
     }
     
@@ -162,18 +163,23 @@ if(FALSE) {
   correlationPlot(out_EDM, start = floor(niter/5))
   
   #get trajectories
-  smp_EDM<-getSample(out_EDM, start=floor(niter/5))
+  smp_EDM<-(getSample(out_EDM, start=floor(niter/5)))
   simout<-matrix(nrow=length(y), ncol=nrow(smp_EDM))
+  sdout<-matrix(nrow=length(y), ncol=nrow(smp_EDM))
   for(i in 1:nrow(smp_EDM)) {
-    simout[,i]<-particleFilterLL_piecewise(smp_EDM[i,], N=N)$Nest
+    tmp<-particleFilterLL_piecewise(smp_EDM[i,], N=N)
+    simout[,i]<-tmp$Nest
+    sdout[,i]<-tmp$Nsd
     
     if(i/10 == floor(i/10)) {
       print(round(i/nrow(smp_EDM),3))
     }
   }
-  save.image("tmp.rda", version = 2)
+  save.image("tmp2.rda", version = 2)
+  #save.image("tmp.rda", version = 2)
 } else {
-  load("tmp.rda")
+  load("tmp2.rda")
+  #load("tmp.rda")
 }
 
 #plot outputs
@@ -185,11 +191,23 @@ m<-rbind(c(1,1,2,5),
          c(1,1,4,6),
          c(1,1,4,6))
 layout(m)
-plot(range(dat$time[yps]), c(0, 5), xlab="time", ylab="abundance", type="n", xaxs="i", main="Corrected")
+ymax<-4.5
+plot(range(dat$time[yps]), c(0, ymax), xlab="time", ylab="abundance", type="n", xaxs="i", main="Corrected")
+fullerror<-FALSE
+
 for(i in 1:nrow(libuse_y)) {
-  tmp<-t(apply(simout[libuse_y[i,1]:libuse_y[i,2],], 1, function(x) quantile(x, probs = pnorm(c(-2,2)))))
+  if(fullerror) {
+    tmpsmp<-matrix(nrow=length(libuse_y[i,1]:libuse_y[i,2]), ncol=ncol(simout))
+    tmpsmp[]<-pmax(0, rnorm(n = length(simout[libuse_y[i,1]:libuse_y[i,2],]),
+                  mean = simout[libuse_y[i,1]:libuse_y[i,2],],
+                  sd = sdout[libuse_y[i,1]:libuse_y[i,2],]))
+  } else {
+    tmpsmp<-simout[libuse_y[i,1]:libuse_y[i,2],]
+  }
+  tmp<-t(apply(tmpsmp, 1, function(x) quantile(x, probs = pnorm(c(-1,1)))))
   tm<-dat$time[yps][libuse_y[i,1]:libuse_y[i,2]]
   polygon(c(tm, rev(tm)), c(tmp[,1], rev(tmp[,2])), col=adjustcolor(collst[i], alpha.f = 0.8))
+  i<-i+1
 }
 abline(h=0, lty=3)
 abline(v=(dat$time[yps][libuse_y[1,1]:libuse_y[1,2]])[Euse], lty=3)
@@ -197,17 +215,16 @@ abline(v=(dat$time[yps][libuse_y[1,1]:libuse_y[1,2]])[Euse], lty=3)
 hist(exp(smp_EDM[,1]), main="Obs. Error_B0", xlab="obs", breaks = 20, probability = TRUE)
 abline(v=mean(exp(smp_EDM[,1])), lwd=2, col="blue")
 hist(exp(smp_EDM[,2]), main="Proc. Noise_B0", xlab="proc", breaks = 20, probability = TRUE)
-abline(v=mean(exp(smp_EDM[,2])), lwd=2, col="red")
+abline(v=mean(exp(smp_EDM[,2])), lwd=2, col="blue")
 hist(exp(smp_EDM[,3]), main="Proc. Noise_B1", xlab="proc", breaks = 20, probability = TRUE)
-abline(v=mean(exp(smp_EDM[,3])), lwd=2, col="red")
+abline(v=mean(exp(smp_EDM[,3])), lwd=2, col="blue")
 
-plot(range(dat$time[yps]), c(0, 5), xlab="time", ylab="abundance", type="n", xaxs="i", main="Raw")
+plot(range(dat$time[yps]), c(0, ymax), xlab="time", ylab="abundance", type="n", xaxs="i", main="Raw")
 for(i in 1:nrow(libuse_y)) {
   lines(dat$time[yps][libuse_y[i,1]:libuse_y[i,2]], y[libuse_y[i,1]:libuse_y[i,2]], col=adjustcolor(collst[i], alpha.f = 0.8))
 }
 tmp<-t(apply(simout, 1, function(x) quantile(x, probs = pnorm(c(-2,0,2)))))
 abline(h=0, lty=3)
-
 
 plot(tmp[,2], y, xlab="Corrected", ylab="Raw", col=adjustcolor(1, alpha.f = 0.2))
 segments(tmp[,1], y, tmp[,3], y, lend=2, col=adjustcolor(1, alpha.f = 0.2))
