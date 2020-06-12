@@ -52,10 +52,12 @@ dat<-data.frame(treatment=datfull$treatment, number=datfull$number, time=datedat
 dat<-dat[order(dat$treatment, dat$number, dat$time),]
 
 # make plots for each
-par(mfrow=c(4,2), mar=c(4,4,2,2))
 libmat<-NULL
 datnum<-1:nrow(dat)
 doplot<-FALSE
+if(doplot) {
+  par(mfrow=c(4,2), mar=c(4,4,2,2))
+}
 
 for(i in 1:nrow(trtmat)) {
   ps1<-which(dat$treatment==trtmat$trt[i])
