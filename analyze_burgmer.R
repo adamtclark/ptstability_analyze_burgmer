@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 if(FALSE) {
   error
   rm(list=ls())
