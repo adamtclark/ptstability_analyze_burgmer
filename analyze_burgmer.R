@@ -164,7 +164,7 @@ bayesianSetup_EDM <- createBayesianSetup(likelihood = likelihood_EDM_piecewise, 
 #if(length(grep(paste(simname, ".rda", sep=""), dir("datout/")))==0) {
 if(TRUE) {
   #run MCMC optimization
-  out_EDM <- runMCMC(bayesianSetup = bayesianSetup_EDM, settings = list(iterations=niter, consoleUpdates=20))
+  out_EDM <- runMCMC(bayesianSetup = bayesianSetup_EDM, settings = list(iterations=niter, consoleUpdates=200))
   #plot(out_EDM, start = floor(niter/5))
   #correlationPlot(out_EDM, start = floor(niter/5))
   
