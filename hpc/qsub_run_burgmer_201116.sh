@@ -9,7 +9,7 @@
 #$ -m e
 #$ -M adam.clark@uni-graz.at
 #$ -cwd
-#$ -l h_rt=4:00:00 
+#$ -l h_rt=14:00:00 
 #$ -pe smp 1
 #$ -t 1-32
 
