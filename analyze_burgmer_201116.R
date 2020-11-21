@@ -40,6 +40,7 @@ commArgin_kp = commArg_ps
 for(iclu in 1:nrep) {
   commArgin = commArgin_kp + (iclu - 1)*nclus
   
+  try({
   if(commArgin <= 152) {
     commArg_ps = commArgin
     
@@ -250,4 +251,5 @@ for(iclu in 1:nrep) {
     save(list = c("out_EDM", "smp_EDM", "simout", "sdout", "simout_smp", "simout_smp_noproc", "pmedm_analy"),
          file = paste("datout/", simname, ".rda", sep=""), version = 2)
   }
+  })
 }
