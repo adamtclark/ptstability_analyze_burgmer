@@ -7,7 +7,11 @@ setwd("~/Dropbox/Projects/041_Powerscaling_stability/src/analyze_burgmer/")
 require(rEDM)
 require(BayesianTools)
 require(viridis)
-require(pttstability)
+
+source("../pts_r_package/pttstability/R/bayesfun.R")
+source("../pts_r_package/pttstability/R/fake_data.R")
+source("../pts_r_package/pttstability/R/logit_funs.R")
+source("../pts_r_package/pttstability/R/particlefilter.R")
 
 # load treatments
 trtsplst<-read.csv("data/trtmat.csv", stringsAsFactors = FALSE)
@@ -125,7 +129,7 @@ fullerror<-FALSE
 tracedparticles<-TRUE
 dev.off()
 
-pdf("plotout/burgmer_examples.pdf", width=8, height=6, colormodel = "cmyk", useDingbats = FALSE)
+pdf("plotout/burgmer_examples_201116.pdf", width=8, height=6, colormodel = "cmyk", useDingbats = FALSE)
 par(mar=c(3.5,3.5,2,1), oma=c(1,3,0,0), mfrow=c(3,3))
 
 for(ii in 1:length(dlst)) {
@@ -157,7 +161,10 @@ for(ii in 1:length(dlst)) {
   
   
   # get EDM parameters
-  sout<-s_map(y, E=2:4, silent = TRUE, lib = libuse_y)
+  sout = NULL
+  for(E in 2:4) {
+    sout<-rbind(sout, s_map(y, E=E, silent = TRUE, lib = libuse_y))
+  }
   tuse<-sout$theta[which.max(sout$rho)]
   euse<-sout$E[which.max(sout$rho)]
   Euse<-euse
