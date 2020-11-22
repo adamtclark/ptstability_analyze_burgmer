@@ -142,20 +142,6 @@ for(iclu in 1:nrep) {
     Euse<-euse #number of embedding dimensions
     
     smap_coefs<-spred$smap_coefficients[[1]]
-    
-    process_scof <- function(smap_coefs) {
-      ps <- which(colnames(smap_coefs)=="Index")
-      if(length(ps) > 0) {
-        smap_coefs = smap_coefs[,-ps]
-      }
-      ps <- which(colnames(smap_coefs)=="C0")
-      if(length(ps) > 0) {
-        smap_coefs = smap_coefs[,c(c(1:ncol(smap_coefs))[-ps], ps)]
-      }
-      colnames(smap_coefs) <- paste("C", c(1:(ncol(smap_coefs)-1), 0), sep="")
-      smap_coefs
-    }
-    
     smap_coefs <- process_scof(smap_coefs)
     
     #likelihood and bayesian set-ups for EDM functions
