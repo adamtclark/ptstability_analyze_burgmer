@@ -109,7 +109,7 @@ particleFilterLL_piecewise<-function(param, N) {
   return(pfout)
 }
 
-dlst<-c("Chlamydomonas.terricola_LSA.rda", "Chlamydomonas.terricola_LSP.rda")
+dlst<-c("Chlamydomonas.terricola_LSA.rda", "Chlamydomonas.terricola_LVA.rda")
 
 #set up plotting
 ymax<-5.4
