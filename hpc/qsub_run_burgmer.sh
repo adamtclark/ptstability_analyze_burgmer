@@ -16,5 +16,5 @@ date
 module load R
 
 cd /cl_tmp/clarka/ptstability_analyze_burgmer/
-./analyze_burgmer_201116.R $SGE_TASK_ID
+./analyze_burgmer.R $SGE_TASK_ID
 date
