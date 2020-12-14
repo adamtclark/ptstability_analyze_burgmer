@@ -17,8 +17,8 @@ source("../pts_r_package/pttstability/R/particlefilter.R")
 trtsplst<-read.csv("data/trtmat.csv", stringsAsFactors = FALSE)
 
 # load data
-datfull<-read.csv2("data/burgmer phyto biovol_casestudy.csv")
-datfull<-datfull[!is.na(datfull$Chlamydomonas.terricola),]
+datfull<-read.table("data/burgmer phyto biovol.csv", header=TRUE, sep=";", stringsAsFactors = FALSE)
+datfull<-datfull[rowSums(!is.na(datfull[,-c(1:3)]),na.rm=T)!=0,]
 
 # get dates
 datedat<-data.frame(date=datfull$date, year=NA, month=NA, day=NA)
@@ -38,7 +38,7 @@ spps<-c(4:22)
 collst<-viridis(length(spps))
 
 # make time series for each treatmetn and species
-dat<-data.frame(treatment=datfull$treatment, number=datfull$number, time=datedat$time, Chlamydomonas.terricola = datfull[,-c(1:3)])
+dat<-data.frame(treatment=datfull$treatment, number=datfull$number, time=datedat$time, datfull[,-c(1:3)])
 dat<-dat[order(dat$treatment, dat$number, dat$time),]
 
 # make plots for each
@@ -109,7 +109,7 @@ particleFilterLL_piecewise<-function(param, N) {
   return(pfout)
 }
 
-dlst<-c("Chlamydomonas.terricola_LSA.rda", "Chlamydomonas.terricola_LVA.rda")
+dlst<-c("Chlamydomonas.terricola_LSA.rda", "Chlamydomonas.terricola_LSP.rda")
 
 #set up plotting
 ymax<-5.4
@@ -170,9 +170,9 @@ for(ii in 1:length(dlst)) {
   Euse<-euse
   
   spred<-s_map(y, E=euse, theta=tuse, silent = TRUE, lib = libuse_y, stats_only = FALSE, save_smap_coefficients = TRUE)
-  edm_r2<-cor(spred$model_output[[1]]$Obs, pmax(0, spred$model_output[[1]]$Predictions), use="complete")^2
-  edm_mae<-mean(abs(spred$model_output[[1]]$Obs-pmax(0, spred$model_output[[1]]$Predictions)),na.rm=T)
-  edm_mte<-mean(abs(spred$model_output[[1]]$Obs-mean(spred$model_output[[1]]$Obs, na.rm=T)), na.rm=T)
+  edm_r2<-cor(spred$model_output[[1]]$obs, pmax(0, spred$model_output[[1]]$pred), use="complete")^2
+  edm_mae<-mean(abs(spred$model_output[[1]]$obs-pmax(0, spred$model_output[[1]]$pred)),na.rm=T)
+  edm_mte<-mean(abs(spred$model_output[[1]]$obs-mean(spred$model_output[[1]]$obs, na.rm=T)), na.rm=T)
   
   if(ii==1) {
     par(mfg=c(1,1,3,3))
