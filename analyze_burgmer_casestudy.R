@@ -8,11 +8,7 @@ if(FALSE) {
 require(rEDM)
 require(BayesianTools)
 require(viridis)
-
-source("../pts_r_package/pttstability/R/bayesfun.R")
-source("../pts_r_package/pttstability/R/fake_data.R")
-source("../pts_r_package/pttstability/R/logit_funs.R")
-source("../pts_r_package/pttstability/R/particlefilter.R")
+require(pttstability)
 
 # load treatments
 trtsplst<-read.csv("data/trtmat.csv", stringsAsFactors = FALSE)
