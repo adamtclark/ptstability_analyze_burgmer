@@ -63,7 +63,7 @@ for(iclu in c(13,15)) {
   yps<-which(dat$treatment==trtuse)
   y<-dat[,as.character(trtsplst[commArg_ps,1])][yps]
   libuse_y<-libuse-min(libuse)+1
-  y<-y/sd(y)
+  y<-y/mean(y)
   
   
   # get EDM parameters

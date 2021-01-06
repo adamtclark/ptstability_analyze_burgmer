@@ -108,7 +108,7 @@ particleFilterLL_piecewise<-function(param, N) {
 dlst<-c("Chlamydomonas.terricola_LSA.rda", "Chlamydomonas.terricola_LVA.rda")
 
 #set up plotting
-ymax<-5.4
+ymax<-6
 axcx<-1.6; axln<-(-1.2); axadj<-0.02
 cbxfun<-function(dw1=0.05, dw2=0.17) {
   xp<-par("usr")[1:2]
@@ -125,7 +125,7 @@ fullerror<-FALSE
 tracedparticles<-TRUE
 dev.off()
 
-pdf("plotout/burgmer_examples_201116.pdf", width=8, height=6, colormodel = "cmyk", useDingbats = FALSE)
+pdf("plotout/burgmer_examples_210106.pdf", width=8, height=6, colormodel = "cmyk", useDingbats = FALSE)
 par(mar=c(3.5,3.5,2,1), oma=c(1,3,0,0), mfrow=c(3,3))
 
 for(ii in 1:length(dlst)) {
@@ -176,6 +176,7 @@ for(ii in 1:length(dlst)) {
   } else {
     par(mfg=c(1,2,3,3))
     luse<-"d."
+    axadj<-0.06
   }
   par(mar=c(3.5,1.2,2,1.2))
   plot(c((dat$time[yps][libuse_y[1,1]:libuse_y[1,2]])[Euse], max(dat$time[yps])), c(0, ymax), xlab="", ylab="", type="n", xaxs="i")
@@ -204,9 +205,12 @@ for(ii in 1:length(dlst)) {
   if(ii==1) {
     mtext("Estimated Abundance", side = 2, line = 2.6)
   }
-  cbxfun()
+  if(ii==1) {
+    cbxfun()
+  }
   box()
   title(luse, line = axln, cex.main=axcx, adj=axadj)
+  axadj<-0.02
   
   #extinction
   tmdat_ci<-array(dim=c(median(libuse_y[,2]-libuse_y[,1]+1),
