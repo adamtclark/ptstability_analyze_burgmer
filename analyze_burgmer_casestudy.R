@@ -41,7 +41,8 @@ if(length(commArgin)==0) {
 
 #for(iclu in c(9:16)) {#c(13,15)) {
 #  commArg_ps = iclu
-  
+  print(commArg_ps)  
+
   simname<-paste(c(trtsplst[commArg_ps,]), collapse = "_")
   
   # load data
