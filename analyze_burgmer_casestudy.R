@@ -24,7 +24,7 @@ source("../pts_r_package/pttstability/R/particlefilter.R")
 trtsplst<-read.csv("data/trtmat.csv", stringsAsFactors = FALSE)
 zero_cutoff = 0
 
-
+commArgin<-commandArgs(1)
 if(length(commArgin)==0) {
   commArgin<-sample(nrow(trtsplst),1)
   commArg_ps<-commArgin
