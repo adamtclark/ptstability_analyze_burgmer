@@ -1,19 +1,26 @@
 #!/usr/bin/env Rscript
-
 if(FALSE) {
   error
   rm(list=ls())
   setwd("~/Dropbox/Projects/041_Powerscaling_stability/src/analyze_burgmer/")
 }
-  
-# load packages
-require(rEDM)
-require(BayesianTools)
-#require(pttstability)
+
+## Load functions:
+commArgin<-commandArgs(1)
+if(length(commArgin)==0) {
+  commArgin<-sample(nrow(trtsplst),1)
+  commArg_ps<-commArgin
+} else {
+  commArg_ps<-as.numeric(commArgin)
+}
+print(commArg_ps)
 
 if(length(dir("/cl_tmp/clarka/Rpkg/"))>0) {
   .libPaths("/cl_tmp/clarka/Rpkg/")
 }
+require(mvtnorm)
+require(rEDM)
+require(BayesianTools)
 
 source("../pts_r_package/pttstability/R/bayesfun.R")
 source("../pts_r_package/pttstability/R/fake_data.R")
