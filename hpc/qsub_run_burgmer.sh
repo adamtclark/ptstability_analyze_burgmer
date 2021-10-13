@@ -10,11 +10,11 @@
 #$ -cwd
 #$ -l h_rt=14:00:00 
 #$ -pe smp 1
-#$ -t 1-32
+#$ -t 9-16
 
 date
 module load R
 
 cd /cl_tmp/clarka/ptstability_analyze_burgmer/
-./analyze_burgmer.R $SGE_TASK_ID
+./analyze_burgmer_casestudy.R $SGE_TASK_ID
 date
