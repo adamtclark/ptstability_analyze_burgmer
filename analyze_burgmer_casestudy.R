@@ -13,7 +13,6 @@ if(length(commArgin)==0) {
 } else {
   commArg_ps<-as.numeric(commArgin)
 }
-print(commArg_ps)
 
 if(length(dir("/cl_tmp/clarka/Rpkg/"))>0) {
   .libPaths("/cl_tmp/clarka/Rpkg/")
