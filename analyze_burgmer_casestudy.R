@@ -7,14 +7,31 @@ if(FALSE) {
 # load packages
 require(rEDM)
 require(BayesianTools)
-require(viridis)
-require(pttstability)
+#require(pttstability)
+
+if(length(dir("/cl_tmp/clarka/Rpkg/"))>0) {
+  .libPaths("/cl_tmp/clarka/Rpkg/")
+}
+
+source("../pts_r_package/pttstability/R/bayesfun.R")
+source("../pts_r_package/pttstability/R/fake_data.R")
+source("../pts_r_package/pttstability/R/logit_funs.R")
+source("../pts_r_package/pttstability/R/particlefilter.R")
 
 # load treatments
 trtsplst<-read.csv("data/trtmat.csv", stringsAsFactors = FALSE)
+zero_cutoff = 0
 
-for(iclu in c(13,15)) {
-  commArg_ps = iclu
+
+if(length(commArgin)==0) {
+  commArgin<-sample(nrow(trtsplst),1)
+  commArg_ps<-commArgin
+} else {
+  commArg_ps<-as.numeric(commArgin)
+}
+
+#for(iclu in c(9:16)) {#c(13,15)) {
+#  commArg_ps = iclu
   
   simname<-paste(c(trtsplst[commArg_ps,]), collapse = "_")
   
@@ -81,8 +98,8 @@ for(iclu in c(13,15)) {
   
   
   # set priors
-  minvUSE_edm<-c(log(0.01), log(0.01), log(0.01))
-  maxvUSE_edm<-c(log(2), log(2), log(3))
+  minvUSE_edm<-c(log(0.001), log(0.001))
+  maxvUSE_edm<-c(log(2), log(2))
   
   #density, sampler, and prior functions for EDM function
   density_fun_USE_edm<-function(param) density_fun0(param = param, minv = minvUSE_edm, maxv=maxvUSE_edm)
@@ -90,33 +107,50 @@ for(iclu in c(13,15)) {
   prior_edm <- createPrior(density = density_fun_USE_edm, sampler = sampler_fun_USE_edm,
                            lower = minvUSE_edm, upper = maxvUSE_edm)
   ## Run filter
-  niter<-1e4 #number of steps for the MCMC sampler
-  N<-2e3 #number of particles
+  niter<-6e3 #number of steps for the MCMC sampler
+  N<-1e3 #number of particles
   Euse<-euse #number of embedding dimensions
   
   smap_coefs<-spred$smap_coefficients[[1]]
   smap_coefs <- process_scof(smap_coefs)
   
   #likelihood and bayesian set-ups for EDM functions
-  likelihood_EDM_piecewise<-function(x) {
+  likelihood_EDM_piecewise<-function(x, lowerbound = -999, maxNuse = 512000) {
+    # piecewise likelihood function with automatic N selection for each time series chunk
     xuse<-x
     tuse_edm<-tuse
     
     LLtot<-0
     
     for(i in 1:nrow(libuse_y)) {
-      ysegment<-y[libuse_y[i,1]:libuse_y[i,2]]
-      smap_coefs_segment<-smap_coefs[libuse_y[i,1]:libuse_y[i,2],]
-      
-      LLtot<-LLtot+likelihood0(param = xuse, y=ysegment, parseparam = function(x) parseparam0(x, colparam=c(logit(1e-6), log(0.1))),
-                detfun = EDMfun0, edmdat = list(E=Euse, theta=tuse_edm, smp_cf=smap_coefs_segment, ytot=y), N = N)
+      if(!is.na(LLtot)) {
+        ysegment<-y[libuse_y[i,1]:libuse_y[i,2]]
+        smap_coefs_segment<-smap_coefs[libuse_y[i,1]:libuse_y[i,2],]
+        
+        Nuse = N
+        LLtmp = -Inf
+        while(LLtmp <=lowerbound & Nuse <= maxNuse) {
+          LLtmp = likelihood0(param = xuse, y=ysegment, parseparam = function(x) parseparam0(x, colparam=c(logit(1e-6), log(0.1))),
+                              detfun = EDMfun0, edmdat = list(E=Euse, theta=tuse_edm, smp_cf=smap_coefs_segment, ytot=y), N = Nuse, lowerbound = lowerbound)
+          Nuse = 2*Nuse
+          #print(paste(i, Nuse))
+        }
+        if(Nuse <= maxNuse) {
+          LLtot<-LLtot+LLtmp
+        } else {
+          LLtot<-NA
+        }
+      }
+    }
+    if(is.na(LLtot)) {
+      LLtot = lowerbound
     }
     
-    return(LLtot)
+    return(sum(LLtot))
   }
   
-  
-  particleFilterLL_piecewise<-function(param, N) {
+  particleFilterLL_piecewise<-function(param, N, lowerbound = -999, maxNuse = 512000) {
+    # piecewise particle filter function with automatic N selection for each time series chunk
     pars<-parseparam0(param, colparam=c(logit(1e-6), log(0.1)))
     tuse_edm<-tuse
     
@@ -125,9 +159,17 @@ for(iclu in c(13,15)) {
       ysegment<-y[libuse_y[i,1]:libuse_y[i,2]]
       smap_coefs_segment<-smap_coefs[libuse_y[i,1]:libuse_y[i,2],]
       
-      tmp<-particleFilterLL(ysegment, pars, N=N, detfun = EDMfun0,
-                            edmdat = list(E=Euse, theta=tuse_edm, smp_cf=smap_coefs_segment),
-                            dotraceback = TRUE, fulltraceback = TRUE)
+      Nuse = N
+      LLtmp = -Inf
+      while(LLtmp <=lowerbound & Nuse <= maxNuse) {
+        tmp<-particleFilterLL(ysegment, pars, N=N, detfun = EDMfun0,
+                                                 edmdat = list(E=Euse, theta=tuse_edm, smp_cf=smap_coefs_segment),
+                                                 dotraceback = TRUE, fulltraceback = TRUE)
+        LLtmp = tmp$LL
+        Nuse = 2*Nuse
+      }
+      
+      
       pfout$Nest[libuse_y[i,1]:libuse_y[i,2]]<-tmp$Nest
       pfout$Nsd[libuse_y[i,1]:libuse_y[i,2]]<-tmp$Nsd
       pfout$rep[libuse_y[i,1]:libuse_y[i,2]]<-i
@@ -142,7 +184,9 @@ for(iclu in c(13,15)) {
   bayesianSetup_EDM <- createBayesianSetup(likelihood = likelihood_EDM_piecewise, prior = prior_edm)
   
   #run MCMC optimization
-  out_EDM <- runMCMC(bayesianSetup = bayesianSetup_EDM, settings = list(iterations=niter, consoleUpdates=200))
+  out_EDM <- runMCMC(bayesianSetup = bayesianSetup_EDM, settings = list(iterations=niter, consoleUpdates=1))
+  #summary(out_EDM)
+  #gelmanDiagnostics(out_EDM)
   #plot(out_EDM, start = floor(niter/5))
   #correlationPlot(out_EDM, start = floor(niter/5))
   
@@ -166,27 +210,26 @@ for(iclu in c(13,15)) {
   
   # calculate pmor per timestep
   xtedm<-simout_smp_noproc
-  stdedm<-sqrt(rep(exp(smp_EDM[,2]), each=nrow(xtedm))*
-                 xtedm^rep(exp(smp_EDM[,3]), each=nrow(xtedm)))
+  stdedm<-exp(smp_EDM[,2])
   
   pmedm_analy<-matrix(nrow=ncol(xtedm), ncol=nrow(libuse_y)+1)
   
   for(i in 1:ncol(xtedm)) {
     for(j in 1:nrow(libuse_y)) {
-      ps<-which(!is.na(xtedm[,i]) & xtedm[,i]>0)
+      ps<-which(!is.na(xtedm[,i]) & xtedm[,i]>zero_cutoff)
       ps<-ps[ps%in%c(libuse_y[j,1]:libuse_y[j,2])]
       if(length(ps)>0) {
-        pmedm_analy[i,j]<-sum(pnorm(0, xtedm[ps,i], stdedm[ps,i]))/length(ps)
+        pmedm_analy[i,j]<-sum(pnorm(0, xtedm[ps,i], stdedm[i]))/length(ps)
       } else {
         pmedm_analy[i,j]<-0
       }
     }
     
-    ps<-(!is.na(xtedm[,i]) & xtedm[,i]>0)
-    pmedm_analy[i,nrow(libuse_y)+1]<-sum(pnorm(0, xtedm[ps,i], stdedm[ps,i]))/sum(ps)
+    ps<-(!is.na(xtedm[,i]) & xtedm[,i]>zero_cutoff)
+    pmedm_analy[i,nrow(libuse_y)+1]<-sum(pnorm(0, xtedm[ps,i], stdedm[i]))/sum(ps)
   }
   
   
   save(list = c("out_EDM", "smp_EDM", "simout", "sdout", "simout_smp", "simout_smp_noproc", "pmedm_analy"),
        file = paste("datout/", simname, ".rda", sep=""), version = 2)
-}
+#}

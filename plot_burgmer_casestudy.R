@@ -52,8 +52,8 @@ for(i in 1:nrow(trtmat)) {
 }
 
 # set priors
-minvUSE_edm<-c(log(0.01), log(0.01), log(0.01))
-maxvUSE_edm<-c(log(2), log(2), log(3))
+minvUSE_edm<-c(log(0.001), log(0.001))
+maxvUSE_edm<-c(log(2), log(2))
 
 #density, sampler, and prior functions for EDM function
 density_fun_USE_edm<-function(param) density_fun0(param = param, minv = minvUSE_edm, maxv=maxvUSE_edm)
@@ -62,28 +62,43 @@ prior_edm <- createPrior(density = density_fun_USE_edm, sampler = sampler_fun_US
                          lower = minvUSE_edm, upper = maxvUSE_edm)
 ## Run filter
 niter<-1e4 #number of steps for the MCMC sampler
-N<-2e3 #number of particles
+N<-1e3 #number of particles
 
 #likelihood and bayesian set-ups for EDM functions
-likelihood_EDM_piecewise<-function(x) {
+likelihood_EDM_piecewise<-function(x, lowerbound = -999, maxNuse = 512000) {
   xuse<-x
   tuse_edm<-tuse
   
   LLtot<-0
   
   for(i in 1:nrow(libuse_y)) {
-    ysegment<-y[libuse_y[i,1]:libuse_y[i,2]]
-    smap_coefs_segment<-smap_coefs[libuse_y[i,1]:libuse_y[i,2],]
-    
-    LLtot<-LLtot+likelihood0(param = xuse, y=ysegment, parseparam = function(x) parseparam0(x, colparam=c(logit(1e-6), log(0.1))),
-                             detfun = EDMfun0, edmdat = list(E=Euse, theta=tuse_edm, smp_cf=smap_coefs_segment, ytot=y), N = N)
+    if(!is.na(LLtot)) {
+      ysegment<-y[libuse_y[i,1]:libuse_y[i,2]]
+      smap_coefs_segment<-smap_coefs[libuse_y[i,1]:libuse_y[i,2],]
+      
+      Nuse = N
+      LLtmp = -Inf
+      while(LLtmp <=lowerbound & Nuse <= maxNuse) {
+        LLtmp = likelihood0(param = xuse, y=ysegment, parseparam = function(x) parseparam0(x, colparam=c(logit(1e-6), log(0.1))),
+                            detfun = EDMfun0, edmdat = list(E=Euse, theta=tuse_edm, smp_cf=smap_coefs_segment, ytot=y), N = Nuse, lowerbound = lowerbound)
+        Nuse = 2*Nuse
+        #print(paste(i, Nuse))
+      }
+      if(Nuse <= maxNuse) {
+        LLtot<-LLtot+LLtmp
+      } else {
+        LLtot<-NA
+      }
+    }
+  }
+  if(is.na(LLtot)) {
+    LLtot = lowerbound
   }
   
-  return(LLtot)
+  return(sum(LLtot))
 }
 
-
-particleFilterLL_piecewise<-function(param, N) {
+particleFilterLL_piecewise<-function(param, N, lowerbound = -999, maxNuse = 512000) {
   pars<-parseparam0(param, colparam=c(logit(1e-6), log(0.1)))
   tuse_edm<-tuse
   
@@ -92,9 +107,17 @@ particleFilterLL_piecewise<-function(param, N) {
     ysegment<-y[libuse_y[i,1]:libuse_y[i,2]]
     smap_coefs_segment<-smap_coefs[libuse_y[i,1]:libuse_y[i,2],]
     
-    tmp<-particleFilterLL(ysegment, pars, N=N, detfun = EDMfun0,
-                          edmdat = list(E=Euse, theta=tuse_edm, smp_cf=smap_coefs_segment),
-                          dotraceback = TRUE, fulltraceback = TRUE)
+    Nuse = N
+    LLtmp = -Inf
+    while(LLtmp <=lowerbound & Nuse <= maxNuse) {
+      tmp<-particleFilterLL(ysegment, pars, N=N, detfun = EDMfun0,
+                            edmdat = list(E=Euse, theta=tuse_edm, smp_cf=smap_coefs_segment),
+                            dotraceback = TRUE, fulltraceback = TRUE)
+      LLtmp = tmp$LL
+      Nuse = 2*Nuse
+    }
+    
+    
     pfout$Nest[libuse_y[i,1]:libuse_y[i,2]]<-tmp$Nest
     pfout$Nsd[libuse_y[i,1]:libuse_y[i,2]]<-tmp$Nsd
     pfout$rep[libuse_y[i,1]:libuse_y[i,2]]<-i
@@ -105,7 +128,9 @@ particleFilterLL_piecewise<-function(param, N) {
   return(pfout)
 }
 
-dlst<-c("Chlamydomonas.terricola_LSA.rda", "Chlamydomonas.terricola_LVA.rda")
+#dlst<-c("Chlamydomonas.terricola_LSA.rda", "Chlamydomonas.terricola_LVA.rda")
+dlst<-c("Chlamydomonas.terricola_HSP.rda", "Chlamydomonas.terricola_HVP.rda")
+
 
 #set up plotting
 ymax<-6
@@ -147,7 +172,7 @@ for(ii in 1:length(dlst)) {
   yps<-which(dat$treatment==trtuse)
   y<-dat[,as.character(trtsplst[commArg_ps,1])][yps]
   libuse_y<-libuse-min(libuse)+1
-  y<-y/sd(y)
+  y<-y/mean(y)
   
   if(ii==1) {
     collst<-c(viridis(nrow(libuse_y)), "black")
