@@ -61,7 +61,7 @@ sampler_fun_USE_edm<-function(x) sampler_fun0(n = 1, minv = minvUSE_edm, maxv=ma
 prior_edm <- createPrior(density = density_fun_USE_edm, sampler = sampler_fun_USE_edm,
                          lower = minvUSE_edm, upper = maxvUSE_edm)
 ## Run filter
-niter<-1e4 #number of steps for the MCMC sampler
+niter<-6e3 #number of steps for the MCMC sampler
 N<-1e3 #number of particles
 
 #likelihood and bayesian set-ups for EDM functions
@@ -128,12 +128,10 @@ particleFilterLL_piecewise<-function(param, N, lowerbound = -999, maxNuse = 5120
   return(pfout)
 }
 
-#dlst<-c("Chlamydomonas.terricola_LSA.rda", "Chlamydomonas.terricola_LVA.rda")
-dlst<-c("Chlamydomonas.terricola_HSP.rda", "Chlamydomonas.terricola_HVP.rda")
-
+dlst<-c("Chlamydomonas.terricola_HSP_long.rda", "Chlamydomonas.terricola_LSP_long.rda")
 
 #set up plotting
-ymax<-6
+ymax<-5
 axcx<-1.6; axln<-(-1.2); axadj<-0.02
 cbxfun<-function(dw1=0.05, dw2=0.17) {
   xp<-par("usr")[1:2]
@@ -150,7 +148,7 @@ fullerror<-FALSE
 tracedparticles<-TRUE
 dev.off()
 
-pdf("plotout/burgmer_examples_210106.pdf", width=8, height=6, colormodel = "cmyk", useDingbats = FALSE)
+pdf("plotout/burgmer_examples_211014.pdf", width=8, height=6, colormodel = "cmyk", useDingbats = FALSE)
 par(mar=c(3.5,3.5,2,1), oma=c(1,3,0,0), mfrow=c(3,3))
 
 for(ii in 1:length(dlst)) {
@@ -161,6 +159,11 @@ for(ii in 1:length(dlst)) {
   }
   
   load(paste("datout/", dlst[ii], sep=""))
+  #summary(out_EDM)
+  #gelmanDiagnostics(out_EDM, start = floor(niter/5))
+  #plot(out_EDM, start = floor(niter/5))
+  #correlationPlot(out_EDM, start = floor(niter/5))
+  
   simname<-gsub(".rda", "", dlst[ii])
   tmpsn<-strsplit(simname, "_", fixed=T)[[1]]
   
@@ -172,7 +175,11 @@ for(ii in 1:length(dlst)) {
   yps<-which(dat$treatment==trtuse)
   y<-dat[,as.character(trtsplst[commArg_ps,1])][yps]
   libuse_y<-libuse-min(libuse)+1
-  y<-y/mean(y)
+  meany = mean(y)
+  y<-y/meany
+  # convert from um^3/ml to mm^3/dL
+  conversion_factor = meany*(((1e-6)^3)/((1e-3)^3))*(1e3/1)*(1/10)
+  
   
   if(ii==1) {
     collst<-c(viridis(nrow(libuse_y)), "black")
@@ -223,12 +230,13 @@ for(ii in 1:length(dlst)) {
     tmp<-t(apply(tmpsmp, 1, function(x) quantile(x, probs = pnorm(c(-2:2)))))
     tm<-dat$time[yps][libuse_y[i,1]:libuse_y[i,2]]
     #lines(tm, y[libuse_y[i,1]:libuse_y[i,2]], col=collst[i], lwd=1.5)
-    polygon(c(tm, rev(tm)), c(tmp[,2], rev(tmp[,4])), col=adjustcolor(collst[i], alpha.f = 0.5))
+
+    polygon(c(tm, rev(tm)), c(tmp[,2], rev(tmp[,4]))*conversion_factor, col=adjustcolor(collst[i], alpha.f = 0.5))
   }
   abline(h=0, lty=3)
   mtext("Time (days)", side = 1, line = 2.6)
   if(ii==1) {
-    mtext("Estimated Abundance", side = 2, line = 2.6)
+    mtext(expression(paste("Est. Abund., mm"^3, "dL"^-1)), side = 2, line = 2.6)
   }
   if(ii==1) {
     cbxfun()
@@ -281,7 +289,7 @@ for(ii in 1:length(dlst)) {
   abline(h=c(0,1), lty=3)
   mtext("Time (days)", side = 1, line = 2.6)
   if(ii==1) {
-    mtext(expression(paste("Estimated Mortality, ", Pr[mor])), side = 2, line = 2.6)
+    mtext(expression(paste("Est. Mortality, ", Pr[mor])), side = 2, line = 2.6)
   }
   cbxfun()
   box()
@@ -302,7 +310,7 @@ for(ii in 1:length(dlst)) {
     box()
     abline(h=0, lty=3)
     abline(v=c(lfuse(minvUSE_edm[1]), lfuse(maxvUSE_edm[1])), lty=3)
-    mtext(expression(paste("Obs. Error Slope, ", beta[obs])), side = 1, line = 2.6)
+    mtext(expression(paste("Obs. Error, ", sigma[italic(O)])), side = 1, line = 2.6)
     mtext("Density", side = 2, line = 2.6)
     cbxfun()
     box()
@@ -310,17 +318,17 @@ for(ii in 1:length(dlst)) {
   }
   
   par(mfg=c(2,3,3,3))
-  plot(density(lfuse(smp_EDM[,2]), bw = diff(range(lfuse(smp_EDM[,2])))/20,
-               from=lfuse(minvUSE_edm[2]), to=lfuse(maxvUSE_edm[2])),
+  plot(density(lfuse(smp_EDM[,2])*conversion_factor, bw = diff(range(lfuse(smp_EDM[,2])*conversion_factor))/20,
+               from=lfuse(minvUSE_edm[2])*conversion_factor, to=lfuse(maxvUSE_edm[2])*conversion_factor),
        main="", xlab="", ylab="", lwd=1.5, axes=F, lty=1, col=collst[dcolps])
-  abline(v=mean(lfuse(smp_EDM[,2])), lwd=2, lty=2, col=collst[dcolps])
+  abline(v=mean(lfuse(smp_EDM[,2])*conversion_factor), lwd=2, lty=2, col=collst[dcolps])
   if(ii==1) {
     axis(2)
     axis(1)
     box()
     abline(h=0, lty=3)
-    abline(v=c(lfuse(minvUSE_edm[2]), lfuse(maxvUSE_edm[2])), lty=3)
-    mtext(expression(paste("Proc. Noise Intercept, ", beta[proc[0]])), side = 1, line = 2.6)
+    abline(v=c(lfuse(minvUSE_edm[2]), lfuse(maxvUSE_edm[2]))*conversion_factor, lty=3)
+    mtext(expression(paste("Proc. Noise, ", sigma[italic(P)])), side = 1, line = 2.6)
     mtext("Density", side = 2, line = 2.6)
     cbxfun()
     box()
@@ -328,17 +336,20 @@ for(ii in 1:length(dlst)) {
   }
   
   par(mfg=c(3,3,3,3))
-  plot(density(lfuse(smp_EDM[,3]), bw = diff(range(lfuse(smp_EDM[,3])))/20,
-               from=lfuse(minvUSE_edm[3]), to=lfuse(maxvUSE_edm[3])),
+  abunds = rowMeans(simout_smp, na.rm=T)
+  abunds = abunds[is.finite(abunds)]
+  abunds = abunds[abunds>0]/lfuse(mean(smp_EDM[,2]))
+  plot(density(abunds, bw = diff(range(abunds))/20,
+               from=0, to=4),
        main="", xlab="", ylab="", lwd=1.5, axes=F, lty=1, col=collst[dcolps])
-  abline(v=mean(lfuse(smp_EDM[,3])), lwd=2, lty=2, col=collst[dcolps])
+  abline(v=median(abunds), lwd=2, lty=2, col=collst[dcolps])
   if(ii==1) {
     axis(2)
     axis(1)
     box()
     abline(h=0, lty=3)
-    abline(v=c(lfuse(minvUSE_edm[3]), lfuse(maxvUSE_edm[3])), lty=3)
-    mtext(expression(paste("Proc. Noise Slope, ", beta[proc[1]])), side = 1, line = 2.6)
+    abline(v=c(0, 1), lty=3)
+    mtext(expression(paste("Scaled Abund., ", italic(A), "(", italic(t), ")/", sigma[italic(P)])), side = 1, line = 2.6)
     mtext("Density", side = 2, line = 2.6)
     cbxfun()
     box()
@@ -370,7 +381,7 @@ for(ii in 1:length(dlst)) {
   
   yrng<-c(0, max(sapply(dns, function(x) max(x$y))))
   
-  xmx<-2000#pmin(365*20, quantile(text_extrap, 0.99))
+  xmx<-1000#pmin(365*20, quantile(text_extrap, 0.99))
   plot(c(dnsrng[1], xmx), yrng, type="n", xlab="", ylab="")
   if(ii==1) {
     collst2<-c(adjustcolor(viridis(ncol(text_extrap)-1), alpha.f = 0.6), "black")

@@ -30,16 +30,16 @@ source("../pts_r_package/pttstability/R/particlefilter.R")
 trtsplst<-read.csv("data/trtmat.csv", stringsAsFactors = FALSE)
 zero_cutoff = 0
 
-commArgin<-commandArgs(1)
-if(length(commArgin)==0) {
-  commArgin<-sample(nrow(trtsplst),1)
-  commArg_ps<-commArgin
-} else {
-  commArg_ps<-as.numeric(commArgin)
-}
+#commArgin<-commandArgs(1)
+#if(length(commArgin)==0) {
+#  commArgin<-sample(nrow(trtsplst),1)
+#  commArg_ps<-commArgin
+#} else {
+#  commArg_ps<-as.numeric(commArgin)
+#}
 
-#for(iclu in c(9:16)) {#c(13,15)) {
-#  commArg_ps = iclu
+for(iclu in c(10,14)) {
+  commArg_ps = iclu
   print(commArg_ps)  
 
   simname<-paste(c(trtsplst[commArg_ps,]), collapse = "_")
@@ -116,7 +116,7 @@ if(length(commArgin)==0) {
   prior_edm <- createPrior(density = density_fun_USE_edm, sampler = sampler_fun_USE_edm,
                            lower = minvUSE_edm, upper = maxvUSE_edm)
   ## Run filter
-  niter<-6e3 #number of steps for the MCMC sampler
+  niter<-1e4 #number of steps for the MCMC sampler
   N<-1e3 #number of particles
   Euse<-euse #number of embedding dimensions
   
@@ -240,5 +240,5 @@ if(length(commArgin)==0) {
   
   
   save(list = c("out_EDM", "smp_EDM", "simout", "sdout", "simout_smp", "simout_smp_noproc", "pmedm_analy"),
-       file = paste("datout/", simname, ".rda", sep=""), version = 2)
-#}
+       file = paste("datout/", simname, "_long.rda", sep=""), version = 2)
+}
