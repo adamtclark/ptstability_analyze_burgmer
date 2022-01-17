@@ -148,8 +148,8 @@ fullerror<-FALSE
 tracedparticles<-TRUE
 dev.off()
 
-pdf("plotout/burgmer_examples_211014.pdf", width=8, height=6, colormodel = "cmyk", useDingbats = FALSE)
-par(mar=c(3.5,3.5,2,1), oma=c(1,3,0,0), mfrow=c(3,3))
+pdf("plotout/burgmer_examples_211014.pdf", width=8, height=4, colormodel = "cmyk", useDingbats = FALSE)
+par(mar=c(3.5,3.5,2,1), oma=c(1,3.5,0,0), mfrow=c(2,3))
 
 for(ii in 1:length(dlst)) {
   if(ii==1) {
@@ -203,11 +203,11 @@ for(ii in 1:length(dlst)) {
   edm_mte<-mean(abs(spred$model_output[[1]]$Obs-mean(spred$model_output[[1]]$Obs, na.rm=T)), na.rm=T)
   
   if(ii==1) {
-    par(mfg=c(1,1,3,3))
+    par(mfg=c(1,1,2,3))
     luse<-"a."
   } else {
-    par(mfg=c(1,2,3,3))
-    luse<-"d."
+    par(mfg=c(1,2,2,3))
+    luse<-"c."
     axadj<-0.06
   }
   par(mar=c(3.5,1.2,2,1.2))
@@ -262,13 +262,15 @@ for(ii in 1:length(dlst)) {
   tmdat_ci[,,3]<-pmin(1, tmdat_ci[,,2]+sqrt(tmdat_ci[,,2]*(1-tmdat_ci[,,2])/nrep))
   
   if(ii==1) {
-    par(mfg=c(2,1,3,3))
+    par(mfg=c(2,1,2,3))
     luse<-"b."
   } else {
-    par(mfg=c(2,2,3,3))
+    par(mfg=c(2,2,2,3))
     luse<-"e."
   }
   
+  if(FALSE) {
+  #cumulative extinction risks
   plot(c((dat$time[yps][libuse_y[1,1]:libuse_y[1,2]])[Euse], max(dat$time[yps])), c(0, 1), xlab="", ylab="", type="n", xaxs="i")
   for(i in 1:(nrow(libuse_y)+1)) {
     if(i<=nrow(libuse_y)) {
@@ -294,12 +296,12 @@ for(ii in 1:length(dlst)) {
   cbxfun()
   box()
   title(luse, line = axln, cex.main=axcx, adj=axadj)
-  
+  }
   
   #parameters
   par(mar=c(3.5,3.5,2,1.2))
   lfuse<-exp
-  par(mfg=c(1,3,3,3))
+  par(mfg=c(1,3,2,3))
   plot(density(lfuse(smp_EDM[,1]), bw = diff(range(lfuse(smp_EDM[,1])))/20,
                from=lfuse(minvUSE_edm[1]), to=lfuse(maxvUSE_edm[1])),
        main="", xlab="", ylab="", lwd=1.5, axes=F, lty=1, col=collst[dcolps])
@@ -314,10 +316,10 @@ for(ii in 1:length(dlst)) {
     mtext("Density", side = 2, line = 2.6)
     cbxfun()
     box()
-    title("g.", line = axln, cex.main=axcx, adj=axadj)
+    title("e.", line = axln, cex.main=axcx, adj=axadj)
   }
   
-  par(mfg=c(2,3,3,3))
+  par(mfg=c(2,3,2,3))
   plot(density(lfuse(smp_EDM[,2])*conversion_factor, bw = diff(range(lfuse(smp_EDM[,2])*conversion_factor))/20,
                from=lfuse(minvUSE_edm[2])*conversion_factor, to=lfuse(maxvUSE_edm[2])*conversion_factor),
        main="", xlab="", ylab="", lwd=1.5, axes=F, lty=1, col=collst[dcolps])
@@ -332,9 +334,11 @@ for(ii in 1:length(dlst)) {
     mtext("Density", side = 2, line = 2.6)
     cbxfun()
     box()
-    title("h.", line = axln, cex.main=axcx, adj=axadj)
+    title("f.", line = axln, cex.main=axcx, adj=axadj)
   }
   
+  if(FALSE) {
+  # abundance distribution
   par(mfg=c(3,3,3,3))
   abunds = rowMeans(simout_smp, na.rm=T)
   abunds = abunds[is.finite(abunds)]
@@ -353,18 +357,18 @@ for(ii in 1:length(dlst)) {
     mtext("Density", side = 2, line = 2.6)
     cbxfun()
     box()
-    title("i.", line = axln, cex.main=axcx, adj=axadj)
+    title("f.", line = axln, cex.main=axcx, adj=axadj)
   }
-  
+  }
   
   #time to extinction
   par(mar=c(3.5,1.2,2,1.2))
   if(ii==1) {
-    par(mfg=c(3,1,3,3))
-    luse<-"c."
+    par(mfg=c(2,1,2,3))
+    luse<-"b."
   } else {
-    par(mfg=c(3,2,3,3))
-    luse<-"f."
+    par(mfg=c(2,2,2,3))
+    luse<-"d."
   }
   
   stepsize<-mean(diff(dat$time[yps][libuse_y[1,1]:libuse_y[1,2]]))
