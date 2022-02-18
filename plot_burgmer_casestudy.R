@@ -151,7 +151,7 @@ dev.off()
 pdf("plotout/burgmer_examples_220218.pdf", width=6, height=8, colormodel = "cmyk", useDingbats = FALSE)
 nm= 2
 psm = c(rep(1,nm), 2, rep(3:4, each=nm))
-m = cbind(c(1,7,2,4)[psm], c(3,7,6,5)[psm])
+m = cbind(c(1,7,4,2)[psm], c(3,7,5,6)[psm])
 layout(m)
 par(oma=c(1,1.5,0,0))
 
@@ -299,7 +299,7 @@ for(ii in 1:length(dlst)) {
     mtext("Density", side = 2, line = 2.6)
     cbxfun()
     box()
-    title("f.", line = axln, cex.main=axcx, adj=axadj)
+    title("d.", line = axln, cex.main=axcx, adj=axadj)
   }
   
   
@@ -331,15 +331,15 @@ for(ii in 1:length(dlst)) {
     mtext(expression(paste("Proc. Noise, ", sigma[italic(P)])), side = 1, line = 2.6)
     cbxfun()
     box()
-    title("g.", line = axln, cex.main=axcx, adj=axadj)
+    title("e.", line = axln, cex.main=axcx, adj=axadj)
   }
   
   #time to extinction
   #par(mar=c(3.5,1.2,2,1.2))
   if(ii==1) {
-    luse<-"d."
+    luse<-"f."
   } else {
-    luse<-"e."
+    luse<-"g."
   }
   
   stepsize<-mean(diff(dat$time[yps][libuse_y[1,1]:libuse_y[1,2]]))
