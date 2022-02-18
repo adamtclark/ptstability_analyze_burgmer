@@ -403,12 +403,12 @@ for(ii in 1:length(dlst)) {
         adjustcolor(col, a[3]))
     }
     
-    tmp = barplot(bardat, axes=F, names.arg = rep("", ncol(bardat)),
+    tmp = barplot(bardat[,2:1], axes=F, names.arg = rep("", ncol(bardat)),
                   col = cbind(acol("black")), horiz = TRUE)
     axis(1)
-    axis(2, at = tmp, labels = c("High Temp.", "Low Temp."), cex.axis=1.2, las=2)
+    axis(2, at = tmp, labels = c("Low Temp.", "High Temp."), cex.axis=1.2, las=2)
     title("c.", line = axln+1.3, cex.main=axcx, adj=axadj)
-    mtext("Temporal Variance", 1, line = 2.4)
+    mtext("Standardised Temporal Variance", 1, line = 2.4)
     #box()
     legend(2.1, 2.5, legend = c("Observation Error", "Process Noise", "Deterministic Variation"),
            fill = acol("black"),
