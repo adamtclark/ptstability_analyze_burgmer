@@ -148,10 +148,15 @@ fullerror<-FALSE
 tracedparticles<-TRUE
 dev.off()
 
-pdf("plotout/burgmer_examples_211014.pdf", width=8, height=4, colormodel = "cmyk", useDingbats = FALSE)
-par(mar=c(3.5,3.5,2,1), oma=c(1,3.5,0,0), mfrow=c(2,3))
+pdf("plotout/burgmer_examples_220218.pdf", width=6, height=8, colormodel = "cmyk", useDingbats = FALSE)
+nm= 2
+psm = c(rep(1,nm), 2, rep(3:4, each=nm))
+m = cbind(c(1,7,2,4)[psm], c(3,7,6,5)[psm])
+layout(m)
+par(oma=c(1,1.5,0,0))
 
 for(ii in 1:length(dlst)) {
+  par(mar=c(3.5,3.5,2,1))
   if(ii==1) {
     dcolps<-6
   } else {
@@ -178,13 +183,17 @@ for(ii in 1:length(dlst)) {
   meany = mean(y)
   y<-y/meany
   # convert from um^3/ml to mm^3/dL
-  conversion_factor = meany*(((1e-6)^3)/((1e-3)^3))*(1e3/1)*(1/10)
-  
+  if(ii == 1) {
+    conversion_factor = meany*(((1e-6)^3)/((1e-3)^3))*(1e3/1)*(1/10)
+  } else {
+    conversion_factor = c(conversion_factor, meany*(((1e-6)^3)/((1e-3)^3))*(1e3/1)*(1/10))
+  }
   
   if(ii==1) {
     collst<-c(viridis(nrow(libuse_y)), "black")
   } else {
     collst<-c(magma(nrow(libuse_y)), "black")
+    mcol2 = c(viridis(nrow(libuse_y)), "black")[6]
   }
   
   
@@ -203,14 +212,12 @@ for(ii in 1:length(dlst)) {
   edm_mte<-mean(abs(spred$model_output[[1]]$Obs-mean(spred$model_output[[1]]$Obs, na.rm=T)), na.rm=T)
   
   if(ii==1) {
-    par(mfg=c(1,1,2,3))
     luse<-"a."
   } else {
-    par(mfg=c(1,2,2,3))
-    luse<-"c."
+    luse<-"b."
     axadj<-0.06
   }
-  par(mar=c(3.5,1.2,2,1.2))
+  #par(mar=c(3.5,1.2,2,1.2))
   plot(c((dat$time[yps][libuse_y[1,1]:libuse_y[1,2]])[Euse], max(dat$time[yps])), c(0, ymax), xlab="", ylab="", type="n", xaxs="i")
   
   for(i in 1:nrow(libuse_y)) {
@@ -231,7 +238,7 @@ for(ii in 1:length(dlst)) {
     tm<-dat$time[yps][libuse_y[i,1]:libuse_y[i,2]]
     #lines(tm, y[libuse_y[i,1]:libuse_y[i,2]], col=collst[i], lwd=1.5)
 
-    polygon(c(tm, rev(tm)), c(tmp[,2], rev(tmp[,4]))*conversion_factor, col=adjustcolor(collst[i], alpha.f = 0.5))
+    polygon(c(tm, rev(tm)), c(tmp[,2], rev(tmp[,4]))*conversion_factor[ii], col=adjustcolor(collst[i], alpha.f = 0.5))
   }
   abline(h=0, lty=3)
   mtext("Time (days)", side = 1, line = 2.6)
@@ -261,52 +268,28 @@ for(ii in 1:length(dlst)) {
   tmdat_ci[,,1]<-pmax(0, tmdat_ci[,,2]-sqrt(tmdat_ci[,,2]*(1-tmdat_ci[,,2])/nrep))
   tmdat_ci[,,3]<-pmin(1, tmdat_ci[,,2]+sqrt(tmdat_ci[,,2]*(1-tmdat_ci[,,2])/nrep))
   
-  if(ii==1) {
-    par(mfg=c(2,1,2,3))
-    luse<-"b."
-  } else {
-    par(mfg=c(2,2,2,3))
-    luse<-"e."
-  }
-  
-  if(FALSE) {
-  #cumulative extinction risks
-  plot(c((dat$time[yps][libuse_y[1,1]:libuse_y[1,2]])[Euse], max(dat$time[yps])), c(0, 1), xlab="", ylab="", type="n", xaxs="i")
-  for(i in 1:(nrow(libuse_y)+1)) {
-    if(i<=nrow(libuse_y)) {
-      tm<-dat$time[yps][libuse_y[i,1]:libuse_y[i,2]]
-    } else {
-      tm<-dat$time[yps][libuse_y[i-1,1]:libuse_y[i-1,2]]
-    }
-    if(length(tm)<nrow(tmdat_ci)) {
-      tm<-c(rep(0, nrow(tmdat_ci)-length(tm)), tm)
-    }
-    
-    if(i<=nrow(libuse_y)) {
-      lines(tm, tmdat_ci[,i,2], col=collst[i], lwd=1.5)
-    } else {
-      polygon(c(tm, rev(tm)), c(tmdat_ci[,i,1], rev(tmdat_ci[,i,3])), col=adjustcolor(collst[i], alpha.f = 0.5))
-    }
-  }
-  abline(h=c(0,1), lty=3)
-  mtext("Time (days)", side = 1, line = 2.6)
-  if(ii==1) {
-    mtext(expression(paste("Est. Mortality, ", Pr[mor])), side = 2, line = 2.6)
-  }
-  cbxfun()
-  box()
-  title(luse, line = axln, cex.main=axcx, adj=axadj)
-  }
-  
   #parameters
-  par(mar=c(3.5,3.5,2,1.2))
-  lfuse<-exp
-  par(mfg=c(1,3,2,3))
-  plot(density(lfuse(smp_EDM[,1]), bw = diff(range(lfuse(smp_EDM[,1])))/20,
-               from=lfuse(minvUSE_edm[1]), to=lfuse(maxvUSE_edm[1])),
-       main="", xlab="", ylab="", lwd=1.5, axes=F, lty=1, col=collst[dcolps])
-  abline(v=mean(lfuse(smp_EDM[,1])), lwd=2, lty=2, col=collst[dcolps])
   if(ii==1) {
+    tmp1 = smp_EDM[,1]
+    tmp2 = minvUSE_edm[1]
+    tmp3 = maxvUSE_edm[1]
+  }
+  
+  if(ii==2) {
+    #par(mar=c(3.5,3.5,2,1.2))
+    lfuse<-exp
+    plot(density(lfuse(smp_EDM[,1]), bw = diff(range(lfuse(smp_EDM[,1])))/20,
+                 from=lfuse(minvUSE_edm[1]), to=lfuse(maxvUSE_edm[1])),
+         main="", xlab="", ylab="", lwd=1.5, axes=F, lty=1, col=collst[dcolps],
+         ylim=c(0,5.6))
+    abline(v=mean(lfuse(smp_EDM[,1])), lwd=2, lty=2, col=collst[dcolps])
+    
+    tmpd = density(lfuse(tmp1), bw = diff(range(lfuse(tmp1)))/20,
+                   from=lfuse(tmp2), to=lfuse(tmp3))
+    lines(tmpd$x, tmpd$y,
+         lwd=1.5, lty=1, col=mcol2)
+    abline(v=mean(lfuse(tmp1)), lwd=2, lty=2, col=mcol2)
+    
     axis(2)
     axis(1)
     box()
@@ -316,59 +299,47 @@ for(ii in 1:length(dlst)) {
     mtext("Density", side = 2, line = 2.6)
     cbxfun()
     box()
-    title("e.", line = axln, cex.main=axcx, adj=axadj)
+    title("f.", line = axln, cex.main=axcx, adj=axadj)
   }
   
-  par(mfg=c(2,3,2,3))
-  plot(density(lfuse(smp_EDM[,2])*conversion_factor, bw = diff(range(lfuse(smp_EDM[,2])*conversion_factor))/20,
-               from=lfuse(minvUSE_edm[2])*conversion_factor, to=lfuse(maxvUSE_edm[2])*conversion_factor),
-       main="", xlab="", ylab="", lwd=1.5, axes=F, lty=1, col=collst[dcolps])
-  abline(v=mean(lfuse(smp_EDM[,2])*conversion_factor), lwd=2, lty=2, col=collst[dcolps])
+  
   if(ii==1) {
+    tmp11 = smp_EDM[,2]
+    tmp22 = minvUSE_edm[2]
+    tmp33 = maxvUSE_edm[2]
+  }
+  
+  if(ii==2) {
+    plot(density(lfuse(smp_EDM[,2])*conversion_factor[ii], bw = diff(range(lfuse(smp_EDM[,2])*conversion_factor[ii]))/20,
+                 from=lfuse(minvUSE_edm[2])*conversion_factor[ii], to=lfuse(maxvUSE_edm[2])*conversion_factor[ii]),
+         main="", xlab="", ylab="", lwd=1.5, axes=F, lty=1, col=collst[dcolps],
+         ylim=c(0,10))
+    abline(v=mean(lfuse(smp_EDM[,2])*conversion_factor[ii]), lwd=2, lty=2, col=collst[dcolps])
+    
+    
+    tmpd2 = density(lfuse(tmp11)*conversion_factor[2], bw = diff(range(lfuse(tmp11)*conversion_factor[2]))/20,
+                   from=lfuse(tmp22)*conversion_factor[2], to=lfuse(tmp33)*conversion_factor[2])
+    lines(tmpd2$x, tmpd2$y,
+        lwd=1.5, lty=1, col=mcol2)
+    abline(v=mean(lfuse(tmp11)*conversion_factor[2]), lwd=2, lty=2, col=mcol2)
+    
     axis(2)
     axis(1)
     box()
     abline(h=0, lty=3)
-    abline(v=c(lfuse(minvUSE_edm[2]), lfuse(maxvUSE_edm[2]))*conversion_factor, lty=3)
+    abline(v=c(lfuse(minvUSE_edm[2]), lfuse(maxvUSE_edm[2]))*conversion_factor[1], lty=3)
     mtext(expression(paste("Proc. Noise, ", sigma[italic(P)])), side = 1, line = 2.6)
-    mtext("Density", side = 2, line = 2.6)
     cbxfun()
     box()
-    title("f.", line = axln, cex.main=axcx, adj=axadj)
-  }
-  
-  if(FALSE) {
-  # abundance distribution
-  par(mfg=c(3,3,3,3))
-  abunds = rowMeans(simout_smp, na.rm=T)
-  abunds = abunds[is.finite(abunds)]
-  abunds = abunds[abunds>0]/lfuse(mean(smp_EDM[,2]))
-  plot(density(abunds, bw = diff(range(abunds))/20,
-               from=0, to=4),
-       main="", xlab="", ylab="", lwd=1.5, axes=F, lty=1, col=collst[dcolps])
-  abline(v=median(abunds), lwd=2, lty=2, col=collst[dcolps])
-  if(ii==1) {
-    axis(2)
-    axis(1)
-    box()
-    abline(h=0, lty=3)
-    abline(v=c(0, 1), lty=3)
-    mtext(expression(paste("Scaled Abund., ", italic(A), "(", italic(t), ")/", sigma[italic(P)])), side = 1, line = 2.6)
-    mtext("Density", side = 2, line = 2.6)
-    cbxfun()
-    box()
-    title("f.", line = axln, cex.main=axcx, adj=axadj)
-  }
+    title("g.", line = axln, cex.main=axcx, adj=axadj)
   }
   
   #time to extinction
-  par(mar=c(3.5,1.2,2,1.2))
+  #par(mar=c(3.5,1.2,2,1.2))
   if(ii==1) {
-    par(mfg=c(2,1,2,3))
-    luse<-"b."
-  } else {
-    par(mfg=c(2,2,2,3))
     luse<-"d."
+  } else {
+    luse<-"e."
   }
   
   stepsize<-mean(diff(dat$time[yps][libuse_y[1,1]:libuse_y[1,2]]))
@@ -411,6 +382,39 @@ for(ii in 1:length(dlst)) {
   cbxfun()
   box()
   title(luse, line = axln, cex.main=axcx, adj=axadj)
+  
+  tmpsim = rowMeans(simout)
+  tmpsim = tmpsim[tmpsim>1e-4]
+  bardattmp = cbind(c(mean(mean(exp(smp_EDM[,1]))*tmpsim)^2,
+                   (mean(exp(smp_EDM[,2])))^2,
+                   NA))
+  bardattmp[3] = var(y,na.rm=TRUE)-sum(bardattmp[1:2])
+  
+  if(ii == 1) {
+    bardat = NULL
+  }
+  bardat = cbind(bardat, bardattmp)
+  
+  if(ii == 2) {
+    par(mar=c(3,5.5,1,13.5))
+    acol = function(col, a=c(0.9, 0.4, 0)) {
+      c(adjustcolor(col, a[1]),
+        adjustcolor(col, a[2]),
+        adjustcolor(col, a[3]))
+    }
+    
+    tmp = barplot(bardat, axes=F, names.arg = rep("", ncol(bardat)),
+                  col = cbind(acol("black")), horiz = TRUE)
+    axis(1)
+    axis(2, at = tmp, labels = c("High Temp.", "Low Temp."), cex.axis=1.2, las=2)
+    title("b.", line = axln+0.3, cex.main=axcx, adj=axadj)
+    mtext("Temporal Variance", 1, line = 2.4)
+    #box()
+    legend(2.1, 2.5, legend = c("Observation Error", "Process Noise", "Deterministic Variation"),
+           fill = acol("black"),
+           border = 1,
+           bty="n", xpd = NA, cex=1.2)
+  }
 }  
 
 dev.off()
