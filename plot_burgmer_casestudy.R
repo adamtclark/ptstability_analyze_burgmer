@@ -310,24 +310,25 @@ for(ii in 1:length(dlst)) {
   }
   
   if(ii==2) {
-    plot(density(lfuse(smp_EDM[,2])*conversion_factor[ii], bw = diff(range(lfuse(smp_EDM[,2])*conversion_factor[ii]))/20,
-                 from=lfuse(minvUSE_edm[2])*conversion_factor[ii], to=lfuse(maxvUSE_edm[2])*conversion_factor[ii]),
+    cfac = 1; #conversion_factor[ii] # change to show in units of biomass rather than standardised biomass
+    plot(density(lfuse(smp_EDM[,2])*cfac, bw = diff(range(lfuse(smp_EDM[,2])*cfac))/20,
+                 from=lfuse(minvUSE_edm[2])*cfac, to=lfuse(maxvUSE_edm[2])*cfac),
          main="", xlab="", ylab="", lwd=1.5, axes=F, lty=1, col=collst[dcolps],
          ylim=c(0,10))
-    abline(v=mean(lfuse(smp_EDM[,2])*conversion_factor[ii]), lwd=2, lty=2, col=collst[dcolps])
+    abline(v=mean(lfuse(smp_EDM[,2])*cfac), lwd=2, lty=2, col=collst[dcolps])
     
     
-    tmpd2 = density(lfuse(tmp11)*conversion_factor[2], bw = diff(range(lfuse(tmp11)*conversion_factor[2]))/20,
-                   from=lfuse(tmp22)*conversion_factor[2], to=lfuse(tmp33)*conversion_factor[2])
+    tmpd2 = density(lfuse(tmp11)*cfac, bw = diff(range(lfuse(tmp11)*cfac))/20,
+                   from=lfuse(tmp22)*cfac, to=lfuse(tmp33)*cfac)
     lines(tmpd2$x, tmpd2$y,
         lwd=1.5, lty=1, col=mcol2)
-    abline(v=mean(lfuse(tmp11)*conversion_factor[2]), lwd=2, lty=2, col=mcol2)
+    abline(v=mean(lfuse(tmp11)*cfac), lwd=2, lty=2, col=mcol2)
     
     axis(2)
     axis(1)
     box()
     abline(h=0, lty=3)
-    abline(v=c(lfuse(minvUSE_edm[2]), lfuse(maxvUSE_edm[2]))*conversion_factor[1], lty=3)
+    abline(v=c(lfuse(minvUSE_edm[2]), lfuse(maxvUSE_edm[2]))*cfac, lty=3)
     mtext(expression(paste("Proc. Noise, ", sigma[italic(P)])), side = 1, line = 2.6)
     cbxfun()
     box()
