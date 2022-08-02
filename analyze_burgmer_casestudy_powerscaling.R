@@ -202,7 +202,7 @@ for(iclu in c(13,15)) {
   
   # calculate pmor per timestep
   xtedm<-simout_smp_noproc
-  stdedm<-exp(smp_EDM[,2])*xtedm^exp(smp_EDM[,3])
+  stdedm<-sqrt(exp(smp_EDM[,2])*xtedm^exp(smp_EDM[,3]))
   
   pmedm_analy<-matrix(nrow=ncol(xtedm), ncol=nrow(libuse_y)+1)
   
